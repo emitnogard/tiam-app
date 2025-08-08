@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1226" />
+    <title>tiam app</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="description" content="Private Money Tracker — local-only, installable PWA." />
+    <link rel="stylesheet" href="/styles.css" />
+    <script>
+      // Service worker registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js');
+        });
+      }
+      // Handle PWA install prompt button
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const btn = document.getElementById('installBtn');
+        if (btn) btn.style.display = 'inline-flex';
+      });
+      async function installApp() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        document.getElementById('installBtn').style.display = 'none';
+      }
+      window.installApp = installApp;
+    </script>
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>tiam app</h1>
+      <div class="top-actions">
+        <button id="installBtn" class="btn secondary" style="display:none;" onclick="installApp()">Install App</button>
+        <button class="btn" id="exportBtn">Export JSON</button>
+        <label class="btn">
+          Import JSON
+          <input type="file" id="importJson" accept="application/json" hidden />
+        </label>
+        <label class="btn">
+          Import CSV
+          <input type="file" id="importCsv" accept=".csv,text/csv" hidden />
+        </label>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="cards">
+        <div class="card">
+          <div class="label">Current Balance</div>
+          <div class="value" id="curBal">$0.00</div>
+          <div class="hint">Sum of all accounts</div>
+        </div>
+        <div class="card">
+          <div class="label">This Month Income</div>
+          <div class="value" id="curIncome">$0.00</div>
+          <div class="hint">Total inflows</div>
+        </div>
+        <div class="card">
+          <div class="label">This Month Expenses</div>
+          <div class="value" id="curOut">$0.00</div>
+          <div class="hint">Total outflows</div>
+        </div>
+        <div class="card">
+          <div class="label">Net This Month</div>
+          <div class="value" id="curNet">$0.00</div>
+          <div class="hint">Income - Expenses</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Accounts</h2>
+        <div class="row">
+          <input id="acctName" placeholder="e.g., Checking" />
+          <button class="btn" id="addAcct">Add</button>
+          <label class="switch">
+            <input type="checkbox" id="autoRecalc" checked />
+            <span>Auto-recalc balances from transactions</span>
+          </label>
+        </div>
+        <div id="accounts" class="grid"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Transactions</h2>
+        <div class="grid6">
+          <div><label>Date</label><input type="date" id="txDate" /></div>
+          <div class="span2"><label>Description</label><input id="txDesc" placeholder="e.g., Netflix, Paycheck" /></div>
+          <div><label>Amount</label><input id="txAmt" placeholder="-9.99 for expense, 1200 for income" /></div>
+          <div><label>Category</label>
+            <select id="txCat"></select>
+          </div>
+          <div><label>Account</label>
+            <select id="txAcct"></select>
+          </div>
+          <div class="span6 right"><button class="btn" id="addTx">Add Transaction</button></div>
+        </div>
+
+        <div class="row filters">
+          <div><label>Search</label><input id="q" placeholder="Find by description" /></div>
+          <div><label>Category</label>
+            <select id="qCat"><option value="All">All</option></select>
+          </div>
+        </div>
+
+        <div class="tableWrap">
+          <table class="table" id="txTable">
+            <thead>
+              <tr>
+                <th>Date</th><th>Description</th><th class="tar">Amount</th><th>Category</th><th>Account</th><th class="tar">Actions</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Subscriptions</h2>
+        <div class="grid2">
+          <div class="tableWrap">
+            <h3>Detected Subscriptions</h3>
+            <table class="table" id="subsTable">
+              <thead><tr><th>Merchant</th><th class="tar">Avg Amount</th><th>Last</th><th>Next (Pred.)</th><th class="tar"># Hits</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="tableWrap">
+            <h3>Upcoming (Next Charges)</h3>
+            <table class="table" id="upcomingTable">
+              <thead><tr><th>Merchant</th><th>Date</th><th class="tar">Amount</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Local-only. Your data stays in this browser.</p>
+    </footer>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
